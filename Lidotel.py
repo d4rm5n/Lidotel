@@ -599,3 +599,300 @@ def gestionar_opciones_registro(tipo_reservacion, indice):
             print("3. Email")
             print("4. Teléfono")
             print("5. Días de estadía")
+
+                        
+            sub_opcion = validar_numero("\nSeleccione el dato a modificar (1-5): ", "entero")
+            
+            if sub_opcion == 1:  # Modificar nombre
+                while True:
+                    nuevo_nombre = input("\nNuevo nombre: ")
+                    if validar_nombre(nuevo_nombre):
+                        registros[indice]["cliente"]["nombre"] = nuevo_nombre
+                        break
+                    print("Error: El nombre debe contener solo letras y espacios.")
+            
+            elif sub_opcion == 2:  # Modificar apellido
+                while True:
+                    nuevo_apellido = input("\nNuevo apellido: ")
+                    if validar_nombre(nuevo_apellido):
+                        registros[indice]["cliente"]["apellido"] = nuevo_apellido
+                        break
+                    print("Error: El apellido debe contener solo letras y espacios.")
+            
+            elif sub_opcion == 3:  # Modificar email
+                while True:
+                    nuevo_email = input("\nNuevo email: ")
+                    if validar_email(nuevo_email):
+                        registros[indice]["cliente"]["email"] = nuevo_email
+                        break
+                    print("Error: Formato de email inválido.")
+            
+            elif sub_opcion == 4:  # Modificar teléfono
+                while True:
+                    nuevo_telefono = input("\nNuevo teléfono: ")
+                    if validar_telefono(nuevo_telefono):
+                        registros[indice]["cliente"]["telefono"] = nuevo_telefono
+                        break
+                    print("Error: El teléfono debe tener 10 u 11 dígitos.")
+            
+            elif sub_opcion == 5:  # Modificar días de estadía
+                nuevos_dias = validar_numero("\nNuevos días de estadía: ", "entero")
+                registros[indice]["cliente"]["dias_estadia"] = nuevos_dias
+            
+            else:
+                print("Opción inválida.")
+                continue
+            
+            # Guardo los cambios
+            if guardar_todos_registros(tipo_reservacion, registros):
+                print("Datos modificados correctamente.")
+                mostrar_registro(registros[indice], tipo_reservacion)
+        
+        elif opcion == 4:  # Añadir personas (solo para Grupo/Familia)
+            if tipo_reservacion != "Grupo/Familia":
+                print("Esta opción solo está disponible para reservaciones de tipo Grupo/Familia.")
+                continue
+            
+            print("\n=== Añadir Personas ===")
+            print("1. Añadir adulto")
+            print("2. Añadir niño")
+            
+            sub_opcion = validar_numero("\nSeleccione una opción (1-2): ", "entero")
+            
+            if sub_opcion == 1:  # Añadir adulto
+                print("\nDatos del nuevo adulto:")
+                datos_adulto = obtener_datos_cliente()
+                
+                if "adultos" not in registros[indice]:
+                    registros[indice]["adultos"] = []
+                registros[indice]['adultos'].append(datos_adulto)
+                
+                # Guardo los cambios
+                if guardar_todos_registros(tipo_reservacion, registros):
+                    print("Adulto añadido correctamente.")
+                    mostrar_registro(registros[indice], tipo_reservacion)
+            
+            elif sub_opcion == 2:  # Añadir niño
+                print("\nDatos del nuevo niño:")
+                datos_nino = obtener_datos_nino()
+                
+                if "ninos" not in registros[indice]:
+                    registros[indice]["ninos"] = []
+                registros[indice]['ninos'].append(datos_nino)
+                
+                # Guardo los cambios
+                if guardar_todos_registros(tipo_reservacion, registros):
+                    print("Niño añadido correctamente.")
+                    mostrar_registro(registros[indice], tipo_reservacion)
+        
+        elif opcion == 5:  # Terminar operación
+            mostrar_despedida()
+            return None
+        
+        else:
+            print("Opción inválida. Intente de nuevo.")
+
+# Registra un cliente individual
+def registrar_individual():
+    limpiar_pantalla()
+    
+    print("\n=== Registro de Cliente Individual ===")
+    
+    # Verifico si existen registros previos
+    verificar_registros_existentes("Individual")
+    
+    # Obtengo los datos del cliente
+    datos_cliente = obtener_datos_cliente()
+    
+    # Pido al cliente que seleccione una habitación
+    habitacion = seleccionar_habitacion()
+    
+    # Creo el registro completo
+    registro = {
+        "cliente": datos_cliente,
+        "habitacion": habitacion
+    }
+    
+    # Guardo los datos y obtengo el índice
+    indice = guardar_datos("Individual", registro)
+    
+    # Muestro el registro
+    mostrar_registro(registro, "Individual")
+    
+    # Devuelvo el tipo de reservación y el índice
+    return "Individual", indice
+
+# Registra un cliente acompañado
+def registrar_acompanado():
+    limpiar_pantalla()
+    
+    print("\n=== Registro de Cliente Acompañado ===")
+    
+    # Verifico si existen registros previos
+    verificar_registros_existentes("Acompañado")
+    
+    # Obtengo los datos del cliente principal
+    print("\nDatos del cliente principal:")
+    datos_cliente = obtener_datos_cliente()
+    
+    # Obtengo los datos del acompañante
+    print("\nDatos del acompañante:")
+    datos_acompanante = obtener_datos_cliente()
+    
+    # Pido al cliente que seleccione una habitación
+    habitacion = seleccionar_habitacion()
+    
+    # Creo el registro completo
+    registro = {
+        "cliente": datos_cliente,
+        "acompanante": datos_acompanante,
+        "habitacion": habitacion
+    }
+    
+    # Guardo los datos y obtengo el índice
+    indice = guardar_datos("Acompañado", registro)
+    
+    # Muestro el registro
+    mostrar_registro(registro, "Acompañado")
+    
+    # Devuelvo el tipo de reservación y el índice
+    return "Acompañado", indice
+
+# Registra un grupo o familia
+def registrar_grupo_familia():
+    limpiar_pantalla()
+    
+    print("\n=== Registro de Grupo/Familia ===")
+    
+    # Verifico si existen registros previos
+    verificar_registros_existentes("Grupo/Familia")
+    
+    # Obtengo los datos del cliente principal
+    print("\nDatos del cliente principal:")
+    datos_cliente = obtener_datos_cliente()
+    
+    # Pregunto si hay adultos adicionales
+    hay_adultos = input("\n¿Hay adultos adicionales? (S/N): ").upper() == "S"
+    adultos = []
+    
+    if hay_adultos:
+        cant_adultos = validar_numero("¿Cuántos adultos adicionales? ", "entero")
+        
+        for i in range(cant_adultos):
+            print(f"\nDatos del adulto adicional #{i+1}:")
+            datos_adulto = obtener_datos_cliente()
+            adultos.append(datos_adulto)
+    
+    # Pregunto si hay niños
+    hay_ninos = input("\n¿Hay niños? (S/N): ").upper() == "S"
+    ninos = []
+    
+    if hay_ninos:
+        cant_ninos = validar_numero("¿Cuántos niños? ", "entero")
+        
+        for i in range(cant_ninos):
+            print(f"\nDatos del niño #{i+1}:")
+            datos_nino = obtener_datos_nino()
+            ninos.append(datos_nino)
+    
+    # Pido al cliente que seleccione una habitación
+    habitacion = seleccionar_habitacion()
+    
+    # Creo el registro completo
+    registro = {
+        "cliente": datos_cliente,
+        "habitacion": habitacion
+    }
+    
+    if adultos:
+        registro["adultos"] = adultos
+    
+    if ninos:
+        registro["ninos"] = ninos
+    
+    # Guardo los datos y obtengo el índice
+    indice = guardar_datos("Grupo/Familia", registro)
+    
+    # Muestro el registro
+    mostrar_registro(registro, "Grupo/Familia")
+    
+    # Devuelvo el tipo de reservación y el índice
+    return "Grupo/Familia", indice
+
+# Muestra el menú principal
+def mostrar_menu_principal():
+    print("\n=== Sistema de Reservaciones Hotel Lidotel Boutique Margarita ===")
+    print("1. Registrar cliente individual")
+    print("2. Registrar cliente acompañado")
+    print("3. Registrar grupo/familia")
+    print("4. Buscar cliente")
+    print("5. Salir")
+
+# Función principal
+def main():
+    # Inicializo los archivos
+    inicializar_archivos()
+    
+    while True:
+        limpiar_pantalla()
+        mostrar_menu_principal()
+        
+        opcion = validar_numero("\nSeleccione una opción (1-5): ", "entero")
+        
+        if opcion == 1:  # Registrar cliente individual
+            tipo, indice = registrar_individual()
+            
+            if indice >= 0:
+                gestionar_opciones_registro(tipo, indice)
+        
+        elif opcion == 2:  # Registrar cliente acompañado
+            tipo, indice = registrar_acompanado()
+            
+            if indice >= 0:
+                gestionar_opciones_registro(tipo, indice)
+        
+        elif opcion == 3:  # Registrar grupo/familia
+            tipo, indice = registrar_grupo_familia()
+            
+            if indice >= 0:
+                gestionar_opciones_registro(tipo, indice)
+        
+        elif opcion == 4:  # Buscar cliente
+            print("\n=== Buscar Cliente ===")
+            print("1. Cliente individual")
+            print("2. Cliente acompañado")
+            print("3. Grupo/familia")
+            
+            sub_opcion = validar_numero("\nSeleccione el tipo de cliente (1-3): ", "entero")
+            
+            if sub_opcion == 1:  # Cliente individual
+                indice = buscar_cliente("Individual")
+                
+                if indice is not None:
+                    gestionar_opciones_registro("Individual", indice)
+            
+            elif sub_opcion == 2:  # Cliente acompañado
+                indice = buscar_cliente("Acompañado")
+                
+                if indice is not None:
+                    gestionar_opciones_registro("Acompañado", indice)
+            
+            elif sub_opcion == 3:  # Grupo/familia
+                indice = buscar_cliente("Grupo/Familia")
+                
+                if indice is not None:
+                    gestionar_opciones_registro("Grupo/Familia", indice)
+            
+            else:
+                print("Opción inválida.")
+        
+        elif opcion == 5:  # Salir
+            mostrar_despedida()
+            break
+        
+        else:
+            print("Opción inválida. Intente de nuevo.")
+
+# Ejecuto la función principal
+if __name__ == "__main__":
+    main()
