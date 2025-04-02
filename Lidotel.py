@@ -298,3 +298,304 @@ def cargar_datos(tipo_reservacion):
                     "email": campos[3],
                     "telefono": campos[4],
                     "dias_estadia": int(campos[5])
+                }
+                
+                # Datos de la habitación
+                habitacion = {
+                    "tipo": campos[6],
+                    "precio": int(campos[7])
+                }
+                
+                # Fecha de registro
+                fecha_registro = campos[8]
+                
+                # Creo el registro base
+                registro = {
+                    "cliente": cliente,
+                    "habitacion": habitacion,
+                    "fecha_registro": fecha_registro
+                }
+                
+                # Datos específicos según el tipo de reservación
+                if tipo_reservacion == "Acompañado" and len(campos) > 9:
+                    acompanante = {
+                        "cedula": campos[9],
+                        "nombre": campos[10],
+                        "apellido": campos[11],
+                        "email": campos[12],
+                        "telefono": campos[13]
+                    }
+                    registro["acompanante"] = acompanante
+                
+                elif tipo_reservacion == "Grupo/Familia" and len(campos) > 9:
+                    # Cantidad de adultos adicionales
+                    cant_adultos = int(campos[9])
+                    
+                    if cant_adultos > 0:
+                        adultos = []
+                        indice = 10
+                        
+                        for i in range(cant_adultos):
+                            adulto = {
+                                "cedula": campos[indice],
+                                "nombre": campos[indice + 1],
+                                "apellido": campos[indice + 2]
+                            }
+                            adultos.append(adulto)
+                            indice += 3
+                        
+                        registro["adultos"] = adultos
+                        
+                        # Cantidad de niños
+                        if indice < len(campos):
+                            cant_ninos = int(campos[indice])
+                            indice += 1
+                            
+                            if cant_ninos > 0:
+                                ninos = []
+                                
+                                for i in range(cant_ninos):
+                                    nino = {
+                                        "nombre": campos[indice],
+                                        "apellido": campos[indice + 1],
+                                        "edad": int(campos[indice + 2])
+                                    }
+                                    ninos.append(nino)
+                                    indice += 3
+                                
+                                registro["ninos"] = ninos
+                
+                registros.append(registro)
+    except:
+        pass
+    
+    return registros
+
+# Muestra los detalles de un registro
+def mostrar_registro(registro, tipo_reservacion):
+    print("\n=== Detalles del Registro ===")
+    print(f"Tipo de Reservación: {tipo_reservacion}")
+    print(f"Fecha de Registro: {registro['fecha_registro']}")
+    
+    print("\n--- Cliente Principal ---")
+    print(f"Nombre: {registro['cliente']['nombre']} {registro['cliente']['apellido']}")
+    print(f"Cédula: {registro['cliente']['cedula']}")
+    print(f"Email: {registro['cliente']['email']}")
+    print(f"Teléfono: {registro['cliente']['telefono']}")
+    print(f"Días de Estadía: {registro['cliente']['dias_estadia']}")
+    
+    print("\n--- Habitación ---")
+    print(f"Tipo: {registro['habitacion']['tipo']}")
+    print(f"Precio por Noche: ${registro['habitacion']['precio']}")
+    
+    total = registro['cliente']['dias_estadia'] * registro['habitacion']['precio']
+    print(f"Total a Pagar: ${total}")
+    
+    if tipo_reservacion == "Acompañado" and "acompanante" in registro:
+        print("\n--- Acompañante ---")
+        print(f"Nombre: {registro['acompanante']['nombre']} {registro['acompanante']['apellido']}")
+        print(f"Cédula: {registro['acompanante']['cedula']}")
+        print(f"Email: {registro['acompanante']['email']}")
+        print(f"Teléfono: {registro['acompanante']['telefono']}")
+    
+    elif tipo_reservacion == "Grupo/Familia":
+        if "adultos" in registro and registro["adultos"]:
+            print(f"\n--- Adultos Adicionales ({len(registro['adultos'])}) ---")
+            for i, adulto in enumerate(registro["adultos"], 1):
+                print(f"{i}. {adulto['nombre']} {adulto['apellido']} - Cédula: {adulto['cedula']}")
+        
+        if "ninos" in registro and registro["ninos"]:
+            print(f"\n--- Niños ({len(registro['ninos'])}) ---")
+            for i, nino in enumerate(registro["ninos"], 1):
+                print(f"{i}. {nino['nombre']} {nino['apellido']} - Edad: {nino['edad']}")
+
+# Busca un cliente por nombre, apellido o cédula
+def buscar_cliente(tipo_reservacion):
+    registros = cargar_datos(tipo_reservacion)
+    
+    if not registros:
+        print(f"No hay registros de tipo {tipo_reservacion}.")
+        return None
+    
+    print("\n=== Buscar Cliente ===")
+    print("1. Buscar por nombre")
+    print("2. Buscar por apellido")
+    print("3. Buscar por cédula")
+    
+    opcion = validar_numero("\nSeleccione una opción (1-3): ", "entero")
+    
+    if opcion == 1:  # Buscar por nombre
+        nombre = input("\nIngrese el nombre a buscar: ")
+        resultados = []
+        
+        for i, reg in enumerate(registros):
+            if nombre.lower() in reg["cliente"]["nombre"].lower():
+                resultados.append((i, reg))
+    
+    elif opcion == 2:  # Buscar por apellido
+        apellido = input("\nIngrese el apellido a buscar: ")
+        resultados = []
+        
+        for i, reg in enumerate(registros):
+            if apellido.lower() in reg["cliente"]["apellido"].lower():
+                resultados.append((i, reg))
+    
+    elif opcion == 3:  # Buscar por cédula
+        cedula = input("\nIngrese la cédula a buscar: ")
+        resultados = []
+        
+        for i, reg in enumerate(registros):
+            if cedula == reg["cliente"]["cedula"]:
+                resultados.append((i, reg))
+    
+    else:
+        print("Opción inválida.")
+        return None
+    
+    if not resultados:
+        print("No se encontraron coincidencias.")
+        return None
+    
+    print(f"\nSe encontraron {len(resultados)} coincidencias:")
+    
+    for i, (indice, reg) in enumerate(resultados, 1):
+        print(f"{i}. {reg['cliente']['nombre']} {reg['cliente']['apellido']} - Cédula: {reg['cliente']['cedula']}")
+    
+    if len(resultados) == 1:
+        seleccion = 1
+    else:
+        seleccion = validar_numero("\nSeleccione un cliente (1-" + str(len(resultados)) + "): ", "entero")
+        
+        if seleccion < 1 or seleccion > len(resultados):
+            print("Selección inválida.")
+            return None
+    
+    indice_seleccionado = resultados[seleccion - 1][0]
+    registro_seleccionado = resultados[seleccion - 1][1]
+    
+    mostrar_registro(registro_seleccionado, tipo_reservacion)
+    
+    return indice_seleccionado
+
+# Guarda todos los registros en un archivo
+def guardar_todos_registros(tipo_reservacion, registros):
+    if tipo_reservacion == "Individual":
+        nombre_archivo = ARCHIVO_INDIVIDUAL
+    elif tipo_reservacion == "Acompañado":
+        nombre_archivo = ARCHIVO_ACOMPANADO
+    else:  # Grupo/Familia
+        nombre_archivo = ARCHIVO_GRUPO_FAMILIA
+    
+    try:
+        # Crear una copia temporal
+        nombre_temp = nombre_archivo + ".temp"
+        
+        with open(nombre_temp, 'w') as archivo:
+            for reg in registros:
+                # Datos del cliente principal
+                linea = f"{reg['cliente']['cedula']}{SEPARADOR}"
+                linea += f"{reg['cliente']['nombre']}{SEPARADOR}"
+                linea += f"{reg['cliente']['apellido']}{SEPARADOR}"
+                linea += f"{reg['cliente']['email']}{SEPARADOR}"
+                linea += f"{reg['cliente']['telefono']}{SEPARADOR}"
+                linea += f"{reg['cliente']['dias_estadia']}{SEPARADOR}"
+                
+                # Datos de la habitación
+                linea += f"{reg['habitacion']['tipo']}{SEPARADOR}"
+                linea += f"{reg['habitacion']['precio']}{SEPARADOR}"
+                
+                # Fecha de registro
+                linea += f"{reg['fecha_registro']}{SEPARADOR}"
+                
+                # Datos específicos según el tipo de reservación
+                if tipo_reservacion == "Acompañado" and "acompanante" in reg:
+                    linea += f"{reg['acompanante']['cedula']}{SEPARADOR}"
+                    linea += f"{reg['acompanante']['nombre']}{SEPARADOR}"
+                    linea += f"{reg['acompanante']['apellido']}{SEPARADOR}"
+                    linea += f"{reg['acompanante']['email']}{SEPARADOR}"
+                    linea += f"{reg['acompanante']['telefono']}{SEPARADOR}"
+                
+                elif tipo_reservacion == "Grupo/Familia":
+                    # Cantidad de adultos adicionales
+                    if "adultos" in reg and reg["adultos"]:
+                        linea += f"{len(reg['adultos'])}{SEPARADOR}"
+                        for adulto in reg["adultos"]:
+                            linea += f"{adulto['cedula']}{SEPARADOR}"
+                            linea += f"{adulto['nombre']}{SEPARADOR}"
+                            linea += f"{adulto['apellido']}{SEPARADOR}"
+                    else:
+                        linea += f"0{SEPARADOR}"
+                    
+                    # Cantidad de niños
+                    if "ninos" in reg and reg["ninos"]:
+                        linea += f"{len(reg['ninos'])}{SEPARADOR}"
+                        for nino in reg["ninos"]:
+                            linea += f"{nino['nombre']}{SEPARADOR}"
+                            linea += f"{nino['apellido']}{SEPARADOR}"
+                            linea += f"{nino['edad']}{SEPARADOR}"
+                    else:
+                        linea += f"0{SEPARADOR}"
+                
+                archivo.write(linea + "\n")
+        
+        # Renombrar el archivo temporal
+        with open(nombre_temp, 'r') as temp:
+            contenido = temp.read()
+        
+        with open(nombre_archivo, 'w') as final:
+            final.write(contenido)
+        
+        # Intentar eliminar el archivo temporal
+        try:
+            with open(nombre_temp, 'w') as temp:
+                pass  # Vaciar el archivo
+        except:
+            pass
+        
+        return True
+    
+    except Exception as e:
+        print(f"Error al guardar los registros: {e}")
+        return False
+
+# Gestiona las opciones disponibles para un registro
+def gestionar_opciones_registro(tipo_reservacion, indice):
+    registros = cargar_datos(tipo_reservacion)
+    
+    if indice < 0 or indice >= len(registros):
+        print("Índice de registro inválido.")
+        return
+    
+    while True:
+        print("\n=== Opciones de Registro ===")
+        print("1. Ver registro anterior")
+        print("2. Ver registro siguiente")
+        print("3. Modificar datos del cliente")
+        print("4. Añadir personas (solo para Grupo/Familia)")
+        print("5. Terminar operación")
+        
+        opcion = validar_numero("\nSeleccione una opción (1-5): ", "entero")
+        
+        if opcion == 1:  # Ver registro anterior
+            if indice > 0:
+                indice -= 1
+                mostrar_registro(registros[indice], tipo_reservacion)
+            else:
+                print("Este es el primer registro.")
+                mostrar_registro(registros[indice], tipo_reservacion)
+        
+        elif opcion == 2:  # Ver registro siguiente
+            if indice < len(registros) - 1:
+                indice += 1
+                mostrar_registro(registros[indice], tipo_reservacion)
+            else:
+                print("Este es el último registro.")
+                mostrar_registro(registros[indice], tipo_reservacion)
+        
+        elif opcion == 3:  # Modificar datos del cliente
+            print("\n=== Modificar Datos del Cliente ===")
+            print("1. Nombre")
+            print("2. Apellido")
+            print("3. Email")
+            print("4. Teléfono")
+            print("5. Días de estadía")
